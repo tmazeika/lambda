@@ -4,10 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Parser {
-    public static class ParseError extends RuntimeException {}
+    public static class ParseError extends RuntimeException {
+    }
+
     private final List<Token> tokens;
     private int current = 0;
-    
+
     Parser(List<Token> tokens) {
         this.tokens = tokens;
     }
@@ -29,8 +31,7 @@ public class Parser {
             } else {
                 expr = this.application();
             }
-            this.consume(Token.Type.RIGHT_PAREN, 
-                         "Expect ')' after expression");
+            this.consume(Token.Type.RIGHT_PAREN, "Expect ')' after expression");
         } else {
             expr = this.identifier();
         }
@@ -51,16 +52,11 @@ public class Parser {
     private Expr lambda() {
         this.consume(Token.Type.LEFT_PAREN, "Expect '(' after lambda");
         List<Expr.Identifier> params = new ArrayList<Expr.Identifier>();
-        int count = 0;
         while (!this.isAtEnd() &&
                this.peek().getType() != Token.Type.RIGHT_PAREN) {
-            count++;
             params.add(identifier());
         }
-        if (count < 1) {
-            throw this.error(this.peek(),
-                             "Expect one or more parameters for lambda");
-        } else if (this.isAtEnd()) {
+        if (this.isAtEnd()) {
             throw this.eofError();
         }
         this.consume(Token.Type.RIGHT_PAREN, "Expect ')' after params");
@@ -68,7 +64,7 @@ public class Parser {
     }
 
     private Expr application() {
-        List<Expr> exprs = new ArrayList<Expr>();
+        List<Expr> exprs = new ArrayList<>();
         int count = 0;
         while (!this.isAtEnd() &&
                this.peek().getType() != Token.Type.RIGHT_PAREN) {
@@ -77,37 +73,44 @@ public class Parser {
         }
         if (count < 2) {
             throw this.error(this.peek(),
-                             "Expect two or more expressions for application");
+                    "Expect two or more expressions for application");
         } else if (this.isAtEnd()) {
             throw this.eofError();
         }
         return new Expr.Application(exprs);
     }
 
-    private Token consume(Token.Type type, String message) {
-        if (check(type)) return advance();
-    
+    private void consume(Token.Type type, String message) {
+        if (check(type)) {
+            advance();
+            return;
+        }
+
         throw error(peek(), message);
     }
 
     private boolean match(Token.Type... types) {
         for (Token.Type type : types) {
-          if (check(type)) {
-            advance();
-            return true;
-          }
+            if (check(type)) {
+                advance();
+                return true;
+            }
         }
-    
+
         return false;
     }
-    
+
     private boolean check(Token.Type type) {
-        if (isAtEnd()) return false;
+        if (isAtEnd()) {
+            return false;
+        }
         return peek().getType() == type;
     }
 
     private Token advance() {
-        if (!isAtEnd()) current++;
+        if (!isAtEnd()) {
+            current++;
+        }
         return previous();
     }
 
