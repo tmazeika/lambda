@@ -11,39 +11,39 @@ abstract class Expr {
            | (<Expr> <Expr>+)               -- Application
   */
 
-    static class Identifier extends Expr {
-        Identifier(Token id) {
-            this.id = id;
-        }
-
-        final Token id;
+  static class Identifier extends Expr {
+    Identifier(Token id) {
+      this.id = id;
     }
 
-    static class Define extends Expr {
-        Define(Identifier id, Expr expr) {
-            this.id = id;
-            this.expr = expr;
-        }
+    final Token id;
+  }
 
-        final Identifier id;
-        final Expr expr;
+  static class Define extends Expr {
+    Define(Identifier id, Expr expr) {
+      this.id = id;
+      this.expr = expr;
     }
 
-    static class Lambda extends Expr {
-        Lambda(List<Identifier> params, Expr body) {
-            this.params = params;
-            this.body = body;
-        }
+    final Identifier id;
+    final Expr expr;
+  }
 
-        final List<Identifier> params;
-        final Expr body;
+  static class Lambda extends Expr {
+    Lambda(List<Identifier> params, Expr body) {
+      this.params = params;
+      this.body = body;
     }
 
-    static class Application extends Expr {
-        Application(List<Expr> args) {
-            this.args = args;
-        }
+    final List<Identifier> params;
+    final Expr body;
+  }
 
-        final List<Expr> args;
+  static class Application extends Expr {
+    Application(List<Expr> args) {
+      this.args = args;
     }
+
+    final List<Expr> args;
+  }
 }
