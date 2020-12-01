@@ -31,9 +31,7 @@ public final class Lambda {
                 List<Token> tokens = new Scanner(line).scanTokens();
                 Expr expr = new Parser(tokens).parse();
                 System.out.println(expr);
-            } catch (ScanException ex) {
-                ex.printStackTrace();
-            } catch (Parser.ParseError ex) {
+            } catch (ScanException | Parser.ParseError ex) {
                 ex.printStackTrace();
             }
         }
@@ -44,23 +42,21 @@ public final class Lambda {
         System.out.println(new Scanner(source).scanTokens());
     }
 
-    private static void report(int line, String where,
-                               String message)
-    {
+    private static void report(int line, String where, String message) {
         System.err.println(
-        "[line " + line + "] Error" + where + ": " + message);
+                "[line " + line + "] Error" + where + ": " + message);
         hadError = true;
     }
 
     static void error(int line, String message) {
-      report(line, "", message);
+        report(line, "", message);
     }
 
     static void error(Token token, String message) {
         if (token.getType() == Token.Type.EOF) {
-        report(token.getLine(), " at end", message);
+            report(token.getLine(), " at end", message);
         } else {
-        report(token.getLine(), " at '" + token.getLexeme() + "'", message);
+            report(token.getLine(), " at '" + token.getLexeme() + "'", message);
         }
     }
 }

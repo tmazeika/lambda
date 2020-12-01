@@ -4,10 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Parser {
-    public static class ParseError extends RuntimeException {}
+    public static class ParseError extends RuntimeException {
+    }
+
     private final List<Token> tokens;
     private int current = 0;
-    
+
     Parser(List<Token> tokens) {
         this.tokens = tokens;
     }
@@ -29,8 +31,7 @@ public class Parser {
             } else {
                 expr = this.application();
             }
-            this.consume(Token.Type.RIGHT_PAREN, 
-                         "Expect ')' after expression");
+            this.consume(Token.Type.RIGHT_PAREN, "Expect ')' after expression");
         } else {
             expr = this.identifier();
         }
@@ -59,7 +60,7 @@ public class Parser {
         }
         if (count < 1) {
             throw this.error(this.peek(),
-                             "Expect one or more parameters for lambda");
+                    "Expect one or more parameters for lambda");
         } else if (this.isAtEnd()) {
             throw this.eofError();
         }
@@ -77,7 +78,7 @@ public class Parser {
         }
         if (count < 2) {
             throw this.error(this.peek(),
-                             "Expect two or more expressions for application");
+                    "Expect two or more expressions for application");
         } else if (this.isAtEnd()) {
             throw this.eofError();
         }
@@ -85,29 +86,35 @@ public class Parser {
     }
 
     private Token consume(Token.Type type, String message) {
-        if (check(type)) return advance();
-    
+        if (check(type)) {
+            return advance();
+        }
+
         throw error(peek(), message);
     }
 
     private boolean match(Token.Type... types) {
         for (Token.Type type : types) {
-          if (check(type)) {
-            advance();
-            return true;
-          }
+            if (check(type)) {
+                advance();
+                return true;
+            }
         }
-    
+
         return false;
     }
-    
+
     private boolean check(Token.Type type) {
-        if (isAtEnd()) return false;
+        if (isAtEnd()) {
+            return false;
+        }
         return peek().getType() == type;
     }
 
     private Token advance() {
-        if (!isAtEnd()) current++;
+        if (!isAtEnd()) {
+            current++;
+        }
         return previous();
     }
 
