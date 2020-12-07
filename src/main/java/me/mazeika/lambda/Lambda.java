@@ -3,12 +3,15 @@ package me.mazeika.lambda;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.Reader;
 import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 public final class Lambda {
+    private static final Evaluator eval = new Evaluator();
     static boolean hadError = false;
+    static boolean hadRuntimeError = false;
 
     public static void main(String[] args) throws IOException {
         if (args.length == 0) {
@@ -19,8 +22,8 @@ public final class Lambda {
     }
 
     private static void repl() throws IOException {
-        final var in = new InputStreamReader(System.in);
-        final var reader = new BufferedReader(in);
+        final Reader in = new InputStreamReader(System.in);
+        final BufferedReader reader = new BufferedReader(in);
         while (true) {
             System.out.print("> ");
             final String line = reader.readLine();
@@ -30,7 +33,7 @@ public final class Lambda {
             try {
                 List<Token> tokens = new Scanner(line).scanTokens();
                 Expr expr = new Parser(tokens).parse();
-                System.out.println(expr);
+                eval.interpret(expr);
             } catch (ScanException | Parser.ParseError ex) {
                 ex.printStackTrace();
             }
@@ -38,8 +41,12 @@ public final class Lambda {
     }
 
     private static void exec(String filename) throws IOException {
-        final var source = Files.readString(Path.of(filename));
-        System.out.println(new Scanner(source).scanTokens());
+        final String source = Files.readString(Paths.get(filename));
+        List<Token> tokens = new Scanner(source).scanTokens();
+        Expr expr = new Parser(tokens).parse();
+        eval.interpret(expr);
+
+        if (hadRuntimeError) System.exit(70);
     }
 
     private static void report(int line, String where, String message) {
@@ -58,5 +65,11 @@ public final class Lambda {
         } else {
             report(token.getLine(), " at '" + token.getLexeme() + "'", message);
         }
+    }
+
+    static void runtimeError(RuntimeError error) {
+        System.err.println(error.getMessage() +
+                "\n[line " + error.token.getLine() + "]");
+        hadRuntimeError = true;
     }
 }

@@ -68,6 +68,7 @@ public class Parser {
         return new Expr.Lambda(params, expression());
     }
 
+    // How to get the lambda function being called?
     private Expr application() {
         List<Expr> exprs = new ArrayList<Expr>();
         int count = 0;

@@ -4,6 +4,8 @@ import java.util.List;
 
 abstract class Expr {
 
+    public abstract Object accept(Expr.Visitor visitor);
+
   /*
   <Expr> ::= <id>                    -- Identifier
            | (define <id> <Expr>)    -- Define
@@ -17,6 +19,11 @@ abstract class Expr {
         }
 
         final Token id;
+
+        @Override
+        public Object accept(Visitor visitor) {
+            return visitor.visitIdentifierExpr(this);
+        }
     }
 
     static class Define extends Expr {
@@ -27,9 +34,14 @@ abstract class Expr {
 
         final Identifier id;
         final Expr expr;
+
+        @Override
+        public Object accept(Visitor visitor) {
+            return visitor.visitDefineExpr(this);
+        }
     }
 
-    static class Lambda extends Expr {
+    static class Lambda extends Expr implements Callable {
         Lambda(List<Identifier> params, Expr body) {
             this.params = params;
             this.body = body;
@@ -37,6 +49,16 @@ abstract class Expr {
 
         final List<Identifier> params;
         final Expr body;
+
+        @Override
+        public Object accept(Visitor visitor) {
+            return visitor.visitLambdaExpr(this);
+        }
+
+      @Override
+      public Object call(Evaluator eval, List<Object> arguments) {
+        return null;
+      }
     }
 
     static class Application extends Expr {
@@ -45,5 +67,18 @@ abstract class Expr {
         }
 
         final List<Expr> args;
+
+        @Override
+        public Object accept(Visitor visitor) {
+            return visitor.visitApplicationExpr(this);
+        }
+    }
+
+    // Represents an object that can visit Expr objects
+    interface Visitor<T> {
+        Object visitIdentifierExpr(Identifier expr);
+        Object visitDefineExpr(Define expr);
+        Object visitLambdaExpr(Lambda expr);
+        Object visitApplicationExpr(Application expr);
     }
 }
