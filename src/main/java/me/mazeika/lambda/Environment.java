@@ -3,18 +3,41 @@ package me.mazeika.lambda;
 import java.util.HashMap;
 import java.util.Map;
 
-public class Environment {
-  private final Map<String, Object> values = new HashMap<>();
+final class Environment {
 
-  void define(String name, Object value) {
-    values.put(name, value);
-  }
+    private final Environment parent;
+    private final Map<Expr.Identifier, Expr> values = new HashMap<>();
 
-  Object get(Token name) {
-    if (values.containsKey(name.getLexeme())) {
-      return values.get(name.getLexeme());
+    Environment(Environment parent) {
+        this.parent = parent;
     }
 
-    throw new RuntimeError(name, "Undefined function '" + name.getLexeme() + "'.");
-  }
+    void define(Expr.Identifier id, Expr value) {
+        this.values.put(id, value);
+    }
+
+    Expr get(Expr.Identifier id) {
+        final Expr expr = this.values.get(id);
+        if (expr == null) {
+            if (this.parent == null) {
+                return id;
+            }
+            return this.parent.get(id);
+        }
+        return expr;
+    }
+
+    @Override
+    public String toString() {
+        String str = "";
+        if (this.parent != null) {
+            str = this.parent.toString();
+        }
+        return str + this.values
+                .entrySet()
+                .stream()
+                .reduce("", (s, entry) -> s + entry.getKey() + ": " +
+                                          entry.getValue() + "\n",
+                        (a, b) -> a + b);
+    }
 }

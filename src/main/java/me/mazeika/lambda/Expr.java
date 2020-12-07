@@ -1,84 +1,141 @@
 package me.mazeika.lambda;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 abstract class Expr {
 
-    public abstract Object accept(Expr.Visitor visitor);
+    abstract <R> R accept(Expr.Visitor<R> visitor, Environment env);
 
-  /*
-  <Expr> ::= <id>                    -- Identifier
-           | (define <id> <Expr>)    -- Define
-           | (lambda (<id>+) <Expr>) -- Lambda
-           | (<Expr> <Expr>+)               -- Application
-  */
+    /*
+    <EXPR> ::= <id>                                  -- Identifier
+             | (define <id> <EXPR>)                  -- Define
+             | (lambda (<id> ...) <EXPR> <EXPR> ...) -- Lambda
+             | (<EXPR> <EXPR> <EXPR> ...)            -- Application
+    */
 
     static class Identifier extends Expr {
+
+        final Token id;
+
         Identifier(Token id) {
             this.id = id;
         }
 
-        final Token id;
+        @Override
+        public <R> R accept(Visitor<R> visitor, Environment env) {
+            return visitor.visitIdentifier(this, env);
+        }
 
         @Override
-        public Object accept(Visitor visitor) {
-            return visitor.visitIdentifierExpr(this);
+        public String toString() {
+            return this.id.getLexeme();
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || this.getClass() != o.getClass()) {
+                return false;
+            }
+            final Identifier that = (Identifier) o;
+            return this.id.equals(that.id);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(this.id);
         }
     }
 
     static class Define extends Expr {
-        Define(Identifier id, Expr expr) {
-            this.id = id;
-            this.expr = expr;
-        }
 
         final Identifier id;
-        final Expr expr;
+        final Expr body;
+
+        Define(Identifier id, Expr expr) {
+            this.id = id;
+            this.body = expr;
+        }
 
         @Override
-        public Object accept(Visitor visitor) {
-            return visitor.visitDefineExpr(this);
+        public <R> R accept(Visitor<R> visitor, Environment env) {
+            return visitor.visitDefine(this, env);
+        }
+
+        @Override
+        public String toString() {
+            return String.format("(define %s %s)", this.id, this.body);
         }
     }
 
     static class Lambda extends Expr implements Callable {
-        Lambda(List<Identifier> params, Expr body) {
-            this.params = params;
-            this.body = body;
-        }
 
         final List<Identifier> params;
         final Expr body;
 
-        @Override
-        public Object accept(Visitor visitor) {
-            return visitor.visitLambdaExpr(this);
+        Lambda(List<Identifier> params, Expr body) {
+            this.params = List.copyOf(params);
+            this.body = body;
         }
 
-      @Override
-      public Object call(Evaluator eval, List<Object> arguments) {
-        return null;
-      }
+        @Override
+        public <R> R accept(Visitor<R> visitor, Environment env) {
+            return visitor.visitLambda(this, env);
+        }
+
+        @Override
+        public Expr call(Evaluator evaluator, List<Expr> arguments,
+                         Environment env) {
+            final Environment fnEnv = new Environment(env);
+            for (int i = 0; i < this.params.size(); i++) {
+                fnEnv.define(this.params.get(i),
+                        evaluator.evaluate(arguments.get(i), env));
+            }
+            return evaluator.evaluate(this.body, fnEnv);
+        }
+
+        @Override
+        public String toString() {
+            return String.format("(lambda (%s) %s)", this.params
+                    .stream()
+                    .map(Identifier::toString)
+                    .collect(Collectors.joining(" ")), this.body.toString());
+        }
     }
 
     static class Application extends Expr {
-        Application(List<Expr> args) {
-            this.args = args;
-        }
 
         final List<Expr> args;
 
+        Application(List<Expr> args) {
+            this.args = List.copyOf(args);
+        }
+
         @Override
-        public Object accept(Visitor visitor) {
-            return visitor.visitApplicationExpr(this);
+        public <R> R accept(Visitor<R> visitor, Environment env) {
+            return visitor.visitApplication(this, env);
+        }
+
+        @Override
+        public String toString() {
+            return String.format("(%s)", this.args
+                    .stream()
+                    .map(Object::toString)
+                    .collect(Collectors.joining(" ")));
         }
     }
 
-    // Represents an object that can visit Expr objects
     interface Visitor<T> {
-        Object visitIdentifierExpr(Identifier expr);
-        Object visitDefineExpr(Define expr);
-        Object visitLambdaExpr(Lambda expr);
-        Object visitApplicationExpr(Application expr);
+        T visitIdentifier(Identifier expr, Environment env);
+
+        T visitDefine(Define expr, Environment env);
+
+        T visitLambda(Lambda expr, Environment env);
+
+        T visitApplication(Application expr, Environment env);
     }
 }
