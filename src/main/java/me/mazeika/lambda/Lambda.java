@@ -23,7 +23,7 @@ public final class Lambda {
         Environment env = new Environment();
 
         for (String line : Files.readAllLines(
-                Path.of(this.getClass().getResource("/stdlib.nat.txt").toURI()))) {
+                Path.of(this.getClass().getResource("/stdlib.nat2.txt").toURI()))) {
             if (!line.isEmpty()) {
                 env = new Definer().define(this.lineToExpr(line), env);
             }
