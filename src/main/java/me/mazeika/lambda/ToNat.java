@@ -4,10 +4,12 @@ final class ToNat implements Val.Visitor<Val.Int> {
 
     @Override
     public Val.Int visitLambda(Val.Lambda lambda) {
-        String f = lambda.param;
-        Expr innerBody = lambda.body;
-        Expr innerBody2 = innerBody.accept(new ForceLambdaExpr(), null).body;
-        String x = innerBody.accept(new ForceLambdaExpr(), null).param;
+        final String f = lambda.param;
+        final Expr.Lambda innerLambda =
+                lambda.body.accept(new ForceLambdaExpr(), null);
+        final String x = innerLambda.accept(new ForceLambdaExpr(), null).param;
+
+        return innerLambda.body.accept(new InnerToNat(f, x), lambda.env);
     }
 
     @Override

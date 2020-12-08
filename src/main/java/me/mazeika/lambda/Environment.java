@@ -22,8 +22,7 @@ final class Environment {
 
     Val lookup(String id) {
         if (this.id == null) {
-            throw new EvalException(
-                    "Cannot reference an identifier before its definition.");
+            return null;
         }
         if (id.equals(this.id)) {
             return this.val;

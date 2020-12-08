@@ -6,6 +6,8 @@
 
 (define 1 (add1 0))
 
+(define 1 (lambda (f x) (f x)))
+
 (define 2 (add1 1))
 
 (define 3 (add1 2))
