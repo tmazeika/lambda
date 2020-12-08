@@ -1,0 +1,9 @@
+(define #t (lambda (x y) x))
+
+(define #f (lambda (x y) y))
+
+(define if (lambda (c t e) (c t e)))
+
+(define or (lambda (a b) (a a b)))
+
+(define and (lambda (a b) (a b a)))

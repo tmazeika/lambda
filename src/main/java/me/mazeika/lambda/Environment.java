@@ -1,43 +1,41 @@
 package me.mazeika.lambda;
 
-import java.util.HashMap;
-import java.util.Map;
-
 final class Environment {
 
-    private final Environment parent;
-    private final Map<String, Expr> values = new HashMap<>();
+    private String id;
+    private Val val;
+    private Environment rest;
 
-    Environment(Environment parent) {
-        this.parent = parent;
+    Environment() {
+        //
     }
 
-    void define(Expr.Identifier id, Expr value) {
-        this.values.put(id.name, value);
+    Environment(String id, Val val, Environment rest) {
+        this.rest = rest;
+        this.id = id;
+        this.val = val;
     }
 
-    Expr get(Expr.Identifier id) {
-        final Expr expr = this.values.get(id.name);
-        if (expr == null) {
-            if (this.parent == null) {
-                return null;
-            }
-            return this.parent.get(id);
+    Environment define(String id, Val val) {
+        return new Environment(id, val, this);
+    }
+
+    Val lookup(String id) {
+        if (this.id == null) {
+            throw new EvalException(
+                    "Cannot reference an identifier before its definition.");
         }
-        return expr;
+        if (id.equals(this.id)) {
+            return this.val;
+        }
+        return this.rest.lookup(id);
     }
 
     @Override
     public String toString() {
-        String str = "";
-        if (this.parent != null) {
-            str = this.parent.toString();
+        if (this.id == null) {
+            return "";
         }
-        return str + this.values
-                .entrySet()
-                .stream()
-                .reduce("", (s, entry) -> s + entry.getKey() + ": " +
-                                          entry.getValue() + "\n",
-                        (a, b) -> a + b);
+        return this.id + " := " + this.val + "\n" + this.rest.toString();
     }
 }

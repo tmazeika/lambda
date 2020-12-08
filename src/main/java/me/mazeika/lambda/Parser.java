@@ -22,14 +22,16 @@ final class Parser {
         final Expr expr;
         if (this.match(Token.Type.LEFT_PAREN)) {
             final String lexeme = this.peek().getLexeme();
-            if (lexeme.equals("define")) {
-                this.advance();
-                expr = this.define();
-            } else if (lexeme.equals("lambda")) {
-                this.advance();
-                expr = this.lambda();
-            } else {
-                expr = this.application();
+            switch (lexeme) {
+                case "define" -> {
+                    this.advance();
+                    expr = this.define();
+                }
+                case "lambda" -> {
+                    this.advance();
+                    expr = this.lambda();
+                }
+                default -> expr = this.application();
             }
             this.consume(Token.Type.RIGHT_PAREN,
                     "Expected ')' after expression.");
@@ -43,21 +45,21 @@ final class Parser {
         return new Expr.Identifier(this.advance().getLexeme());
     }
 
-    private Expr define() {
+    private Expr.Define define() {
         if (this.peek().getType() != Token.Type.IDENTIFIER) {
             throw this.error(this.peek(), "Expected identifier.");
         }
-        return new Expr.Define(this.identifier(), this.expression());
+        return new Expr.Define(this.identifier().name, this.expression());
     }
 
-    private Expr lambda() {
+    private Expr.Lambda lambda() {
         this.consume(Token.Type.LEFT_PAREN, "Expected '(' after lambda.");
-        final List<Expr.Identifier> params = new ArrayList<>();
+        final List<String> params = new ArrayList<>();
         int count = 0;
         while (!this.isAtEnd() &&
                this.peek().getType() != Token.Type.RIGHT_PAREN) {
             count++;
-            params.add(this.identifier());
+            params.add(this.identifier().name);
         }
         if (count < 1) {
             throw this.error(this.peek(),
@@ -75,7 +77,7 @@ final class Parser {
                         (a, b) -> a);
     }
 
-    private Expr application() {
+    private Expr.Application application() {
         final List<Expr> exprs = new ArrayList<>();
         int count = 0;
         while (!this.isAtEnd() &&
@@ -97,9 +99,10 @@ final class Parser {
                         (a, b) -> a);
     }
 
-    private Token consume(Token.Type type, String message) {
+    private void consume(Token.Type type, String message) {
         if (this.check(type)) {
-            return this.advance();
+            this.advance();
+            return;
         }
         throw this.error(this.peek(), message);
     }

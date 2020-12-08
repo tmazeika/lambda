@@ -49,38 +49,12 @@ abstract class Expr {
         }
     }
 
-    static class Integer extends Expr {
-
-        final int val;
-
-        Integer(int val) {
-            this.val = val;
-        }
-
-        @Override
-        <R> R accept(Visitor<R> visitor, Environment env) {
-            return null;
-        }
-
-        @Override
-        public String toString() {
-            return String.valueOf(this.val);
-        }
-    }
-
-    static class Plus1 extends Expr {
-        @Override
-        <R> R accept(Visitor<R> visitor, Environment env) {
-            return null;
-        }
-    }
-
     static class Define extends Expr {
 
-        final Identifier id;
+        final String id;
         final Expr body;
 
-        Define(Identifier id, Expr expr) {
+        Define(String id, Expr expr) {
             this.id = id;
             this.body = expr;
         }
@@ -98,10 +72,10 @@ abstract class Expr {
 
     static class Lambda extends Expr {
 
-        final Identifier param;
+        final String param;
         final Expr body;
 
-        Lambda(Identifier param, Expr body) {
+        Lambda(String param, Expr body) {
             this.param = param;
             this.body = body;
         }

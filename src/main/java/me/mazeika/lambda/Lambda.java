@@ -19,16 +19,15 @@ public final class Lambda {
     private void startRepl() throws IOException, URISyntaxException {
         final Reader in = new InputStreamReader(System.in);
         final BufferedReader reader = new BufferedReader(in);
-        final Environment env = new Environment(null);
 
-        Files
-                .readAllLines(Path.of(this
-                        .getClass()
-                        .getResource("/stdlib.txt")
-                        .toURI()))
-                .stream()
-                .filter(s -> !s.isEmpty())
-                .forEach(s -> this.lineToExpr(s, env));
+        Environment env = new Environment();
+
+        for (String line : Files.readAllLines(
+                Path.of(this.getClass().getResource("/stdlib.nat.txt").toURI()))) {
+            if (!line.isEmpty()) {
+                env = new Definer().define(this.lineToExpr(line), env);
+            }
+        }
 
         while (true) {
             System.out.print("> ");
@@ -36,18 +35,28 @@ public final class Lambda {
             if (line == null) {
                 return;
             }
+            final Expr expr;
             try {
-                System.out.println(this.lineToExpr(line, env).toString());
+                expr = this.lineToExpr(line);
             } catch (ScanException | ParseException ex) {
+                ex.printStackTrace();
+                continue;
+            }
+            env = new Definer().define(expr, env);
+            try {
+                final Val val = new Evaluator().evaluate(expr, env);
+                if (val != null) {
+                    System.out.println(val.accept(new ToNat()));
+                }
+            } catch (EvalException ex) {
                 ex.printStackTrace();
             }
         }
     }
 
-    private Expr lineToExpr(String line, Environment env) {
+    private Expr lineToExpr(String line) {
         final List<Token> tokens = new Scanner(line).scanTokens();
-        final Expr expr = new Parser(tokens).parse();
-        return new Evaluator().evaluate(expr, env);
+        return new Parser(tokens).parse();
     }
 
     static void error(Token token, String message) {

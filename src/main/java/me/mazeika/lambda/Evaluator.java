@@ -4,44 +4,32 @@ package me.mazeika.lambda;
  * Represents a body capable of evaluating abstract syntax trees and
  * identifiers
  */
-public class Evaluator implements Expr.Visitor<Expr> {
+public class Evaluator implements Expr.Visitor<Val> {
 
-    Expr evaluate(Expr expr, Environment env) {
+    Val evaluate(Expr expr, Environment env) {
         return expr.accept(this, env);
     }
 
     @Override
-    public Expr visitIdentifier(Expr.Identifier expr, Environment env) {
-        final Expr resolved = env.get(expr);
-        if (resolved == null) {
-            return expr;
-        }
-        return this.evaluate(resolved, env);
+    public Val visitIdentifier(Expr.Identifier expr, Environment env) {
+        return env.lookup(expr.name);
     }
 
     @Override
-    public Expr visitDefine(Expr.Define expr, Environment env) {
-        env.define(expr.id, expr.body);
-        return expr;
+    public Val visitDefine(Expr.Define expr, Environment env) {
+        return null;
     }
 
     @Override
-    public Expr visitLambda(Expr.Lambda expr, Environment env) {
-        return expr;
+    public Val visitLambda(Expr.Lambda expr, Environment env) {
+        return new Val.Lambda(expr.param, expr.body, env);
     }
 
     @Override
-    public Expr visitApplication(Expr.Application expr, Environment env) {
-        final Expr callee = this.evaluate(expr.callee, env);
-        if (callee instanceof Expr.Plus1) {
-            return new Expr.Integer(((Expr.Integer) expr.arg).val + 1);
-        }
-        if (!(callee instanceof Expr.Lambda)) {
-            return new Expr.Application(callee, expr.arg);
-        }
-        final Expr.Lambda lambda = (Expr.Lambda) callee;
-        final Environment callEnv = new Environment(env);
-        callEnv.define(lambda.param, this.evaluate(expr.arg, env));
-        return this.evaluate(lambda.body, callEnv);
+    public Val visitApplication(Expr.Application expr, Environment env) {
+        final Val calleeVal = this.evaluate(expr.callee, env);
+        final Val.Lambda callee = calleeVal.accept(new ForceLambdaVal());
+        final Val arg = this.evaluate(expr.arg, env);
+        return this.evaluate(callee.body, callee.env.define(callee.param, arg));
     }
 }

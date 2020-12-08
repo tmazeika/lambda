@@ -29,7 +29,3 @@
 (define * (lambda (m n) (lambda (f) (m (n f)))))
 
 (define ^ (lambda (m n) (n (* m) 1)))
-
-(define #t (lambda (x y) x))
-
-(define #f (lambda (x y) y))
