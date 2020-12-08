@@ -8,9 +8,9 @@ abstract class Val {
 
         final String param;
         final Expr body;
-        final Environment env;
+        final Environment<Val> env;
 
-        Lambda(String param, Expr body, Environment env) {
+        Lambda(String param, Expr body, Environment<Val> env) {
             this.param = param;
             this.body = body;
             this.env = env;

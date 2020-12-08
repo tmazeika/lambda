@@ -1,26 +1,26 @@
 package me.mazeika.lambda;
 
-final class Environment {
+final class Environment<T> {
 
-    private String id;
-    private Val val;
-    private Environment rest;
+    public String id;
+    public T val;
+    public Environment<T> rest;
 
     Environment() {
         //
     }
 
-    Environment(String id, Val val, Environment rest) {
+    Environment(String id, T val, Environment<T> rest) {
         this.rest = rest;
         this.id = id;
         this.val = val;
     }
 
-    Environment define(String id, Val val) {
-        return new Environment(id, val, this);
+    Environment<T> define(String id, T val) {
+        return new Environment<T>(id, val, this);
     }
 
-    Val lookup(String id) {
+    T lookup(String id) {
         if (this.id == null) {
             return null;
         }

@@ -1,6 +1,6 @@
 package me.mazeika.lambda;
 
-final class IsApplicationExpr implements Expr.Visitor<Boolean, Val> {
+final class IsLambdaExpr implements Expr.Visitor<Boolean, Val> {
 
     @Override
     public Boolean visitIdentifier(Expr.Identifier expr, Environment<Val> env) {
@@ -14,11 +14,11 @@ final class IsApplicationExpr implements Expr.Visitor<Boolean, Val> {
 
     @Override
     public Boolean visitLambda(Expr.Lambda expr, Environment<Val> env) {
-        return false;
+        return true;
     }
 
     @Override
     public Boolean visitApplication(Expr.Application expr, Environment<Val> env) {
-        return true;
+        return false;
     }
 }

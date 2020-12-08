@@ -20,7 +20,7 @@ public final class Lambda {
         final Reader in = new InputStreamReader(System.in);
         final BufferedReader reader = new BufferedReader(in);
 
-        Environment env = new Environment();
+        Environment<Expr> env = new Environment<Expr>();
 
         for (String line : Files.readAllLines(
                 Path.of(this.getClass().getResource("/stdlib.nat.txt").toURI()))) {
@@ -35,7 +35,7 @@ public final class Lambda {
             if (line == null) {
                 return;
             }
-            final Expr expr;
+            Expr expr;
             try {
                 expr = this.lineToExpr(line);
             } catch (ScanException | ParseException ex) {
@@ -44,7 +44,8 @@ public final class Lambda {
             }
             env = new Definer().define(expr, env);
             try {
-                final Val val = new Evaluator().evaluate(expr, env);
+                expr = new BReduce().betaReduce(expr, env);
+                final Val val = new Evaluator().evaluate(expr, null);
                 if (val != null) {
                     System.out.println("ENV:\n" + val.accept(new ForceLambdaVal()).env);
                     System.out.println("----------");

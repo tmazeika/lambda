@@ -4,30 +4,30 @@ package me.mazeika.lambda;
  * Represents a body capable of evaluating abstract syntax trees and
  * identifiers
  */
-public class Definer implements Expr.Visitor<Environment> {
+public class Definer implements Expr.Visitor<Environment<Expr>, Expr> {
 
-    Environment define(Expr expr, Environment env) {
+    Environment<Expr> define(Expr expr, Environment<Expr> env) {
         return expr.accept(this, env);
     }
 
     @Override
-    public Environment visitIdentifier(Expr.Identifier expr, Environment env) {
+    public Environment<Expr> visitIdentifier(Expr.Identifier expr, Environment<Expr> env) {
         return env;
     }
 
     @Override
-    public Environment visitDefine(Expr.Define expr, Environment env) {
-        return env.define(expr.id, new Evaluator().evaluate(expr.body, env));
+    public Environment<Expr> visitDefine(Expr.Define expr, Environment<Expr> env) {
+        return env.define(expr.id, expr.body);
     }
 
     @Override
-    public Environment visitLambda(Expr.Lambda expr, Environment env) {
+    public Environment<Expr> visitLambda(Expr.Lambda expr, Environment<Expr> env) {
         return env;
     }
 
     @Override
-    public Environment visitApplication(Expr.Application expr,
-                                        Environment env) {
+    public Environment<Expr> visitApplication(Expr.Application expr,
+                                        Environment<Expr> env) {
         return env;
     }
 }

@@ -4,7 +4,7 @@ import java.util.Objects;
 
 abstract class Expr {
 
-    abstract <R> R accept(Expr.Visitor<R> visitor, Environment env);
+    abstract <R, E> R accept(Expr.Visitor<R, E> visitor, Environment<E> env);
 
     /*
     <EXPR> ::= <id>                                  -- Identifier
@@ -22,7 +22,7 @@ abstract class Expr {
         }
 
         @Override
-        public <R> R accept(Visitor<R> visitor, Environment env) {
+        public <R, E> R accept(Visitor<R, E> visitor, Environment<E> env) {
             return visitor.visitIdentifier(this, env);
         }
 
@@ -60,7 +60,7 @@ abstract class Expr {
         }
 
         @Override
-        public <R> R accept(Visitor<R> visitor, Environment env) {
+        public <R, E> R accept(Visitor<R, E> visitor, Environment<E> env) {
             return visitor.visitDefine(this, env);
         }
 
@@ -81,7 +81,7 @@ abstract class Expr {
         }
 
         @Override
-        public <R> R accept(Visitor<R> visitor, Environment env) {
+        public <R, E> R accept(Visitor<R, E> visitor, Environment<E> env) {
             return visitor.visitLambda(this, env);
         }
 
@@ -102,7 +102,7 @@ abstract class Expr {
         }
 
         @Override
-        public <R> R accept(Visitor<R> visitor, Environment env) {
+        public <R, E> R accept(Visitor<R, E> visitor, Environment<E> env) {
             return visitor.visitApplication(this, env);
         }
 
@@ -112,13 +112,13 @@ abstract class Expr {
         }
     }
 
-    interface Visitor<T> {
-        T visitIdentifier(Identifier expr, Environment env);
+    interface Visitor<T, E> {
+        T visitIdentifier(Identifier expr, Environment<E> env);
 
-        T visitDefine(Define expr, Environment env);
+        T visitDefine(Define expr, Environment<E> env);
 
-        T visitLambda(Lambda expr, Environment env);
+        T visitLambda(Lambda expr, Environment<E> env);
 
-        T visitApplication(Application expr, Environment env);
+        T visitApplication(Application expr, Environment<E> env);
     }
 }
