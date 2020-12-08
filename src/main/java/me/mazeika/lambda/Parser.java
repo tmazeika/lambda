@@ -2,6 +2,7 @@ package me.mazeika.lambda;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.IntStream;
 
 final class Parser {
 
@@ -39,7 +40,7 @@ final class Parser {
     }
 
     private Expr.Identifier identifier() {
-        return new Expr.Identifier(this.advance());
+        return new Expr.Identifier(this.advance().getLexeme());
     }
 
     private Expr define() {
@@ -65,7 +66,13 @@ final class Parser {
             throw this.eofError();
         }
         this.consume(Token.Type.RIGHT_PAREN, "Expected ')' after parameters.");
-        return new Expr.Lambda(params, this.expression());
+        return IntStream
+                .iterate(params.size() - 2, i -> i >= 0, i -> i - 1)
+                .boxed()
+                .reduce(new Expr.Lambda(params.get(params.size() - 1),
+                                this.expression()),
+                        (inner, i) -> new Expr.Lambda(params.get(i), inner),
+                        (a, b) -> a);
     }
 
     private Expr application() {
@@ -82,7 +89,12 @@ final class Parser {
         } else if (this.isAtEnd()) {
             throw this.eofError();
         }
-        return new Expr.Application(exprs);
+        return IntStream
+                .range(2, exprs.size())
+                .boxed()
+                .reduce(new Expr.Application(exprs.get(0), exprs.get(1)),
+                        (left, i) -> new Expr.Application(left, exprs.get(i)),
+                        (a, b) -> a);
     }
 
     private Token consume(Token.Type type, String message) {

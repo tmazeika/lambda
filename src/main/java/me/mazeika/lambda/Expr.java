@@ -1,8 +1,6 @@
 package me.mazeika.lambda;
 
-import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 abstract class Expr {
 
@@ -17,10 +15,10 @@ abstract class Expr {
 
     static class Identifier extends Expr {
 
-        final Token id;
+        final String name;
 
-        Identifier(Token id) {
-            this.id = id;
+        Identifier(String name) {
+            this.name = name;
         }
 
         @Override
@@ -30,7 +28,7 @@ abstract class Expr {
 
         @Override
         public String toString() {
-            return this.id.getLexeme();
+            return this.name;
         }
 
         @Override
@@ -42,12 +40,38 @@ abstract class Expr {
                 return false;
             }
             final Identifier that = (Identifier) o;
-            return this.id.equals(that.id);
+            return this.name.equals(that.name);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(this.id);
+            return Objects.hash(this.name);
+        }
+    }
+
+    static class Integer extends Expr {
+
+        final int val;
+
+        Integer(int val) {
+            this.val = val;
+        }
+
+        @Override
+        <R> R accept(Visitor<R> visitor, Environment env) {
+            return null;
+        }
+
+        @Override
+        public String toString() {
+            return String.valueOf(this.val);
+        }
+    }
+
+    static class Plus1 extends Expr {
+        @Override
+        <R> R accept(Visitor<R> visitor, Environment env) {
+            return null;
         }
     }
 
@@ -68,17 +92,17 @@ abstract class Expr {
 
         @Override
         public String toString() {
-            return String.format("(define %s %s)", this.id, this.body);
+            return String.format("%s := %s", this.id, this.body);
         }
     }
 
-    static class Lambda extends Expr implements Callable {
+    static class Lambda extends Expr {
 
-        final List<Identifier> params;
+        final Identifier param;
         final Expr body;
 
-        Lambda(List<Identifier> params, Expr body) {
-            this.params = List.copyOf(params);
+        Lambda(Identifier param, Expr body) {
+            this.param = param;
             this.body = body;
         }
 
@@ -88,31 +112,19 @@ abstract class Expr {
         }
 
         @Override
-        public Expr call(Evaluator evaluator, List<Expr> arguments,
-                         Environment env) {
-            final Environment fnEnv = new Environment(env);
-            for (int i = 0; i < this.params.size(); i++) {
-                fnEnv.define(this.params.get(i),
-                        evaluator.evaluate(arguments.get(i), env));
-            }
-            return evaluator.evaluate(this.body, fnEnv);
-        }
-
-        @Override
         public String toString() {
-            return String.format("(lambda (%s) %s)", this.params
-                    .stream()
-                    .map(Identifier::toString)
-                    .collect(Collectors.joining(" ")), this.body.toString());
+            return String.format("(λ (%s) %s)", this.param, this.body);
         }
     }
 
     static class Application extends Expr {
 
-        final List<Expr> args;
+        final Expr callee;
+        final Expr arg;
 
-        Application(List<Expr> args) {
-            this.args = List.copyOf(args);
+        Application(Expr callee, Expr arg) {
+            this.callee = callee;
+            this.arg = arg;
         }
 
         @Override
@@ -122,10 +134,7 @@ abstract class Expr {
 
         @Override
         public String toString() {
-            return String.format("(%s)", this.args
-                    .stream()
-                    .map(Object::toString)
-                    .collect(Collectors.joining(" ")));
+            return String.format("(%s %s)", this.callee, this.arg);
         }
     }
 

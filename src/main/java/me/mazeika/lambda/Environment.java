@@ -6,21 +6,21 @@ import java.util.Map;
 final class Environment {
 
     private final Environment parent;
-    private final Map<Expr.Identifier, Expr> values = new HashMap<>();
+    private final Map<String, Expr> values = new HashMap<>();
 
     Environment(Environment parent) {
         this.parent = parent;
     }
 
     void define(Expr.Identifier id, Expr value) {
-        this.values.put(id, value);
+        this.values.put(id.name, value);
     }
 
     Expr get(Expr.Identifier id) {
-        final Expr expr = this.values.get(id);
+        final Expr expr = this.values.get(id.name);
         if (expr == null) {
             if (this.parent == null) {
-                return id;
+                return null;
             }
             return this.parent.get(id);
         }

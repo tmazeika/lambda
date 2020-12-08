@@ -12,13 +12,17 @@ public class Evaluator implements Expr.Visitor<Expr> {
 
     @Override
     public Expr visitIdentifier(Expr.Identifier expr, Environment env) {
-        return env.get(expr);
+        final Expr resolved = env.get(expr);
+        if (resolved == null) {
+            return expr;
+        }
+        return this.evaluate(resolved, env);
     }
 
     @Override
     public Expr visitDefine(Expr.Define expr, Environment env) {
         env.define(expr.id, expr.body);
-        return null;
+        return expr;
     }
 
     @Override
@@ -28,54 +32,16 @@ public class Evaluator implements Expr.Visitor<Expr> {
 
     @Override
     public Expr visitApplication(Expr.Application expr, Environment env) {
-        final Expr callee = expr.args.get(0).accept(this, env);
-        if (!(callee instanceof Callable)) {
-            return expr;
+        final Expr callee = this.evaluate(expr.callee, env);
+        if (callee instanceof Expr.Plus1) {
+            return new Expr.Integer(((Expr.Integer) expr.arg).val + 1);
         }
-        return ((Callable) callee).call(this,
-                expr.args.subList(1, expr.args.size()), env);
+        if (!(callee instanceof Expr.Lambda)) {
+            return new Expr.Application(callee, expr.arg);
+        }
+        final Expr.Lambda lambda = (Expr.Lambda) callee;
+        final Environment callEnv = new Environment(env);
+        callEnv.define(lambda.param, this.evaluate(expr.arg, env));
+        return this.evaluate(lambda.body, callEnv);
     }
-
-//  @Override
-//  public Object visitIdentifierExpr(Expr.Identifier expr) {
-//    return expr.id;
-//  }
-//
-//  @Override
-//  public Object visitDefineExpr(Expr.Define expr) {
-//    // Now we must convert a literal syntax tree (an expression) into a
-//    runtime value
-//    Object value = evaluate(expr.expr);
-//    environment.define(expr.id.id.getLexeme(), value);
-//    return null;
-//  }
-//
-//  @Override
-//  public Object visitLambdaExpr(Expr.Lambda expr) {
-//    Object body = this.evaluate(expr.body);
-//
-//    return null;
-//  }
-//
-//  // This one I'm not certain about
-//  @Override
-//  public Object visitApplicationExpr(Expr.Application expr) {
-//    List<Object> arguments = new ArrayList<>();
-//
-//    // Called function as first argument from application
-//    Object callee = evaluate(expr.args.get(0));
-//    if (!(callee instanceof Expr.Lambda)) {
-//      // Throw runtime error--but don't have a token here
-//
-//    }
-//    Expr.Lambda function = (Expr.Lambda)expr.args.get(0);
-//
-//    // If wrong number of args are given--should actually throw error
-//    System.out.println("Bad number of args");
-//    for (int i = 1; i < expr.args.size(); i++) {
-//      arguments.add(evaluate(expr.args.get(i)));
-//    }
-//
-//    return function.call(this, arguments);
-//  }
 }
