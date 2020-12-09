@@ -10,10 +10,17 @@ import java.util.List;
 public class BReduce implements Expr.Visitor<Expr, Expr> {
 
     Expr betaReduce(Expr expr, Environment<Expr> env) {
-        while (!env.equals(null)) {
+        while (env.id != null) {
             expr = this.subst(env.id, env.val, expr);
+            env = env.rest;
         }
-        return expr.accept(this, null);
+        Expr oldExpr;
+        do {
+            System.out.println(expr.toString());
+            oldExpr = expr;
+            expr = expr.accept(this, null);
+        } while (expr != null);
+        return oldExpr;
     }
 
     @Override
@@ -29,9 +36,10 @@ public class BReduce implements Expr.Visitor<Expr, Expr> {
     @Override
     public Expr visitLambda(Expr.Lambda expr, Environment<Expr> env) {
         Expr body = expr.body.accept(this, null);
-        if (body.equals(null)) {
+        if (body == null) {
             return null;
         } else {
+            System.out.println(body.toString());
             return new Expr.Lambda(expr.param, body);
         }
     }
@@ -42,8 +50,12 @@ public class BReduce implements Expr.Visitor<Expr, Expr> {
             return this.reduce(expr);
         } else {
             Expr appCallee = expr.callee.accept(this, null);
-            if (appCallee.equals(null)) {
-                return null;
+            if (appCallee == null) {
+                Expr appArg = expr.arg.accept(this, null);
+                if (appArg == null) {
+                    return null;
+                }
+                return new Expr.Application(expr.callee, appArg);
             }
             return new Expr.Application(appCallee, expr.arg);
         }
@@ -58,11 +70,11 @@ public class BReduce implements Expr.Visitor<Expr, Expr> {
         if (body.accept(new IsIdentifierExpr(), null)) {
             Expr.Identifier iden = body.accept(new ForceIdentifierExpr(), null);
             String v = iden.name;
-            return param == v ? arg : body;
+            return param.equals(v) ? arg : body;
         } else if (body.accept(new IsLambdaExpr(), null)) {
             Expr.Lambda lam = body.accept(new ForceLambdaExpr(), null);
             String v = lam.param;
-            if (param == v) {
+            if (param.equals(v)) {
                 return body;
             } else {
                 ArrayList<Expr> exprList = new ArrayList<>(List.of(
@@ -73,7 +85,7 @@ public class BReduce implements Expr.Visitor<Expr, Expr> {
                 String newParam = this.makeNewParam(lam.param, exprList);
                 Expr s1 = this.subst(lam.param, new Expr.Identifier(newParam), lam.body);
                 Expr s2 = this.subst(param, arg, s1);
-                if (s1.equals(null) || s2.equals(null)) {
+                if (s1 == null || s2 == null) {
                     return null;
                 }
                 return new Expr.Lambda(newParam, s2);
@@ -82,7 +94,7 @@ public class BReduce implements Expr.Visitor<Expr, Expr> {
             Expr.Application app = body.accept(new ForceApplicationExpr(), null);
             Expr appCallee = this.subst(param, arg, app.callee);
             Expr appArg = this.subst(param, arg, app.arg);
-            if (appCallee.equals(null) || appArg.equals(null)) {
+            if (appCallee == null || appArg == null) {
                 return null;
             }
             return new Expr.Application(appCallee, appArg);
