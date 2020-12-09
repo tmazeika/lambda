@@ -39,7 +39,7 @@ public final class Token {
         if (o == null || this.getClass() != o.getClass()) {
             return false;
         }
-        final var token = (Token) o;
+        final Token token = (Token) o;
         return this.type == token.type && this.lexeme.equals(token.lexeme);
     }
 

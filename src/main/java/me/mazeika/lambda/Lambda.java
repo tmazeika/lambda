@@ -3,60 +3,77 @@ package me.mazeika.lambda;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.Reader;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
 public final class Lambda {
-    static boolean hadError = false;
 
-    public static void main(String[] args) throws IOException {
-        if (args.length == 0) {
-            Lambda.repl();
-        } else {
-            Lambda.exec(args[0]);
-        }
+    public static void main(String[] args)
+            throws IOException, URISyntaxException {
+        new Lambda().startRepl();
     }
 
-    private static void repl() throws IOException {
-        final var in = new InputStreamReader(System.in);
-        final var reader = new BufferedReader(in);
+    private void startRepl() throws IOException, URISyntaxException {
+        final Reader in = new InputStreamReader(System.in);
+        final BufferedReader reader = new BufferedReader(in);
+
+        Environment<Expr> env = new Environment<>();
+
+        for (String line : Files.readAllLines(
+                Path.of(this.getClass().getResource("/stdlib.txt").toURI()))) {
+            if (!line.isEmpty()) {
+                env = new Definer().define(this.lineToExpr(line), env);
+            }
+        }
+
         while (true) {
             System.out.print("> ");
             final String line = reader.readLine();
             if (line == null) {
                 return;
             }
+            Expr expr;
             try {
-                List<Token> tokens = new Scanner(line).scanTokens();
-                Expr expr = new Parser(tokens).parse();
+                expr = this.lineToExpr(line);
+            } catch (ScanException | ParseException ex) {
+                ex.printStackTrace();
+                continue;
+            }
+            env = new Definer().define(expr, env);
+            try {
                 System.out.println(expr);
-            } catch (ScanException | Parser.ParseError ex) {
+                expr = new BReduce().betaReduce(expr, env);
+                final Val val = new Evaluator().evaluate(expr, null);
+                if (val != null) {
+                    System.out.println("==>");
+                    System.out.println(val);
+                    System.out.println("==>");
+                    System.out.println(val.accept(new ToBool()));
+                }
+            } catch (EvalException ex) {
                 ex.printStackTrace();
             }
         }
     }
 
-    private static void exec(String filename) throws IOException {
-        final var source = Files.readString(Path.of(filename));
-        System.out.println(new Scanner(source).scanTokens());
-    }
-
-    private static void report(int line, String where, String message) {
-        System.err.println(
-                "[line " + line + "] Error" + where + ": " + message);
-        hadError = true;
-    }
-
-    static void error(int line, String message) {
-        report(line, "", message);
+    private Expr lineToExpr(String line) {
+        final List<Token> tokens = new Scanner(line).scanTokens();
+        return new Parser(tokens).parse();
     }
 
     static void error(Token token, String message) {
         if (token.getType() == Token.Type.EOF) {
-            report(token.getLine(), " at end", message);
+            report(token.getLine(), "at end", message);
         } else {
-            report(token.getLine(), " at '" + token.getLexeme() + "'", message);
+            report(token.getLine(), "at '" + token.getLexeme() + "'", message);
         }
+    }
+
+    private static void report(int line, String where, String message) {
+        System.err.println(
+                "[line " + line + "] Error " + where + ": " + message);
     }
 }

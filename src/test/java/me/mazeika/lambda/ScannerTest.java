@@ -41,7 +41,7 @@ public final class ScannerTest {
     @ParameterizedTest
     @MethodSource("scanTokensProvider")
     public void testScanTokens(String source, List<Token> expected) {
-        final var tokens = new Scanner(source).scanTokens();
+        final List<Token> tokens = new Scanner(source).scanTokens();
         assertIterableEquals(expected, tokens);
     }
 }
