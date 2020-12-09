@@ -50,7 +50,7 @@ public final class Lambda {
                     System.out.println("ENV:\n" + val.accept(new ForceLambdaVal()).env);
                     System.out.println("----------");
                     System.out.println(val);
-//                    System.out.println(val.accept(new ToNat()));
+                    System.out.println(val.accept(new ToNat()));
                 }
             } catch (EvalException ex) {
                 ex.printStackTrace();
