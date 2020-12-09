@@ -3,6 +3,7 @@ package me.mazeika.lambda;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Represents a body capable of evaluating abstract syntax trees and identifiers
@@ -16,9 +17,8 @@ public class BReduce implements Expr.Visitor<Expr, Expr> {
         }
         Expr oldExpr;
         do {
-            System.out.println(expr.toString());
             oldExpr = expr;
-            expr = expr.accept(this, null);
+            expr = Objects.requireNonNull(expr).accept(this, null);
         } while (expr != null);
         return oldExpr;
     }
@@ -39,7 +39,6 @@ public class BReduce implements Expr.Visitor<Expr, Expr> {
         if (body == null) {
             return null;
         } else {
-            System.out.println(body.toString());
             return new Expr.Lambda(expr.param, body);
         }
     }
@@ -84,8 +83,8 @@ public class BReduce implements Expr.Visitor<Expr, Expr> {
                 ));
                 String newParam = this.makeNewParam(lam.param, exprList);
                 Expr s1 = this.subst(lam.param, new Expr.Identifier(newParam), lam.body);
-                Expr s2 = this.subst(param, arg, s1);
-                if (s1 == null || s2 == null) {
+                Expr s2 = this.subst(param, arg, Objects.requireNonNull(s1));
+                if (s2 == null) {
                     return null;
                 }
                 return new Expr.Lambda(newParam, s2);
@@ -103,7 +102,7 @@ public class BReduce implements Expr.Visitor<Expr, Expr> {
     }
 
     private String makeNewParam(String param, List<Expr> exprList) {
-        HashSet<String> freeVars = new HashSet<String>();
+        HashSet<String> freeVars = new HashSet<>();
         for (Expr expr : exprList) {
             freeVars.addAll(findFreeVars(expr));
         }
@@ -119,7 +118,7 @@ public class BReduce implements Expr.Visitor<Expr, Expr> {
     }
 
     private HashSet<String> findFreeVars(Expr expr) {
-        HashSet<String> freeVars = new HashSet<String>();
+        HashSet<String> freeVars = new HashSet<>();
         if (expr.accept(new IsIdentifierExpr(), null)) {
             Expr.Identifier iden = expr.accept(new ForceIdentifierExpr(), null);
             freeVars.add(iden.name);

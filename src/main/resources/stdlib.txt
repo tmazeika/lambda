@@ -4,10 +4,10 @@
 
 (define #t (lambda (x y) x))
 (define #f (lambda (x y) y))
-(define if (lambda (c t e) (c t e)))
-(define or (lambda (a b) (a a b)))
 (define and (lambda (a b) (a b a)))
+(define or (lambda (a b) (a a b)))
 (define not (lambda (a x y) (a y x)))
+(define if (lambda (c t e) (c t e)))
 
 (define add1 (lambda (n) (lambda (f x) (f (n f x)))))
 
@@ -20,9 +20,12 @@
 (define length (Z (lambda (length) (lambda (l) (if (null? l) 0 (add1 (length (cdr l))))))))
 
 (define inccons (lambda (p) (cons (cdr p) (add1 (cdr p)))))
-(define sub1 (lambda (n) (car (n inccons (cons 0 0)))))
 
 (define 0 (lambda (f x) x))
+(define 1 (lambda (f x) (f x)))
+(define 2 (lambda (f x) (f (f x))))
+(define 3 (lambda (f x) (f (f (f x)))))
+
 (define 1 (add1 0))
 (define 2 (add1 1))
 (define 3 (add1 2))
@@ -50,11 +53,13 @@
 (define 25 (add1 24))
 (define 26 (add1 25))
 
+(define sub1 (lambda (n) (car (n inccons (cons 0 0)))))
+
 (define zero? (lambda (n) (n (lambda (x) #f) #t)))
 (define + (lambda (m n) (lambda (f x) (m f (n f x)))))
 (define - (lambda (a b) (b sub1 a)))
 (define * (lambda (m n) (lambda (f) (m (n f)))))
 (define ^ (lambda (m n) (n (* m) 1)))
 
-(define fact (Z (lambda (fact) (lambda (x) (if (zero? x) 1 (* x (fact (sub1 x))))))))
-(define fib (Z (lambda (fib) (lambda (x) (if (or (zero? x) (zero? (sub1 x))) 1 (+ (fib (- x 1)) (fib (- x 2))))))))
+(define fact (Y (lambda (fact) (lambda (x) (if (zero? x) 1 (* x (fact (sub1 x))))))))
+(define fib (Y (lambda (fib) (lambda (x) (if (or (zero? x) (zero? (sub1 x))) 1 (+ (fib (- x 1)) (fib (- x 2))))))))

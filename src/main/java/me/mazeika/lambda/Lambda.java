@@ -20,10 +20,10 @@ public final class Lambda {
         final Reader in = new InputStreamReader(System.in);
         final BufferedReader reader = new BufferedReader(in);
 
-        Environment<Expr> env = new Environment<Expr>();
+        Environment<Expr> env = new Environment<>();
 
         for (String line : Files.readAllLines(
-                Path.of(this.getClass().getResource("/stdlib.nat.txt").toURI()))) {
+                Path.of(this.getClass().getResource("/stdlib.txt").toURI()))) {
             if (!line.isEmpty()) {
                 env = new Definer().define(this.lineToExpr(line), env);
             }
@@ -44,13 +44,14 @@ public final class Lambda {
             }
             env = new Definer().define(expr, env);
             try {
+                System.out.println(expr);
                 expr = new BReduce().betaReduce(expr, env);
                 final Val val = new Evaluator().evaluate(expr, null);
                 if (val != null) {
-                    System.out.println("ENV:\n" + val.accept(new ForceLambdaVal()).env);
-                    System.out.println("----------");
+                    System.out.println("==>");
                     System.out.println(val);
-                    System.out.println(val.accept(new ToNat()));
+                    System.out.println("==>");
+                    System.out.println(val.accept(new ToBool()));
                 }
             } catch (EvalException ex) {
                 ex.printStackTrace();

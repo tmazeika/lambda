@@ -4,15 +4,20 @@ final class ToBool implements Val.Visitor<Val.Str> {
 
     @Override
     public Val.Str visitLambda(Val.Lambda lambda) {
-        final Evaluator evaluator = new Evaluator();
-        final Val.Lambda inner = evaluator
-                .evaluate(lambda.body,
-                        lambda.env.define(lambda.param, new Val.Str("true")))
-                .accept(new ForceLambdaVal());
-        return evaluator
-                .evaluate(inner.body,
-                        inner.env.define(inner.param, new Val.Str("false")))
-                .accept(new ForceStrVal());
+        final String x = lambda.param;
+        final Expr.Lambda innerLambda =
+                lambda.body.accept(new ForceLambdaExpr(), null);
+        final String y = innerLambda.accept(new ForceLambdaExpr(), null).param;
+
+        final String innerId = innerLambda.body.accept(new ForceIdentifierExpr(), null).name;
+
+        if (innerId.equals(x)) {
+            return new Val.Str("true");
+        }
+        if (innerId.equals(y)) {
+            return new Val.Str("false");
+        }
+        throw new EvalException("Not a true/false value.");
     }
 
     @Override
